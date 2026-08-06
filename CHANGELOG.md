@@ -16,6 +16,11 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 
 - App TypeScript config enables `strict` (matches docs and `functions/`)
 
+### Added
+
+- Fridge merge unit tests (`src/sync/merge.test.ts`) covering name-fold,
+  id dedupe, and family/personal best helpers
+
 ### Planned
 
 - Sound effects (tasteful, optional, muted by default consideration)

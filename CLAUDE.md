@@ -14,10 +14,10 @@ is banned here.
 
 ## Stack
 
-React 19 + TypeScript (strict) + Vite + Tailwind CSS 4 (tokens in
-`src/index.css` @theme) + Zustand 5 (persist) + Vitest. Lint: oxlint.
+React 19 + TypeScript (strict — both app and functions) + Vite + Tailwind CSS 4
+(tokens in `src/index.css` @theme) + Zustand 5 (persist) + Vitest. Lint: oxlint.
 Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
-`tasks/leaderboard-api.md`.
+`tasks/leaderboard-api.md`. **73 tests** (engine + validate + fridge merge).
 
 ## Architecture
 
@@ -29,15 +29,18 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
   CSS `light-dark()` tokens at runtime via computed-style probe; fx overlays
   (clear/lock/drop/level) live in `fx.ts`, disabled under reduced motion.
 - `src/input/` — keyboard (DAS 160 / ARR 40, self-implemented repeat) + touch
-  gestures (drag/tap/flick) + optional button pad → engine actions.
+  gestures (drag/tap/flick) + on-screen button pad on coarse pointers
+  (gestures stay available; pad always shown on touch).
 - `src/screens/` — HomeScreen (roster, difficulty tiles, fridge door),
   PlayScreen (loop host, pause, kind game-over; engine state in a ref, HUD
-  numbers mirrored into React at low frequency).
-- `src/store/` — Zustand persist: roster, settings, local scores (`synced`
-  flag per record).
+  numbers mirrored into React at low frequency). Game-over personal/family
+  bests use the full fridge union (`fridgeEntries`), not local-only scores.
+- `src/store/` — Zustand persist: roster, settings (ghost/controls; no UI yet),
+  local scores (`synced` flag per record).
 - `src/sync/` — leaderboard client: push-unsynced / fetch-remote (single-flight
-  with 4s cooldown), remote records merged into the fridge by id, cross-device
-  players folded by case-insensitive name; `remoteRecords` is in-memory only.
+  with 4s cooldown); `merge.ts` unions local + remote by id, folds cross-device
+  players by case-insensitive name (`familyBest` / `personalBestEntry` for
+  celebrations); `remoteRecords` is in-memory only. 5 merge tests.
 - `functions/api/` — Pages Function `/api/scores` (GET/POST), KV key per
   difficulty, top-50, idempotent POST, validation in `_validate.ts` (16 tests).
 
@@ -54,6 +57,7 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
 - Respect the impeccable bans: no border-left accent stripes, no gradient text, no pure #000/#fff.
 - Kind competition applies to copy everywhere — no shaming, no "you lose."
 - Server validation is anti-nonsense, not anti-cheat (family trust model).
+- Celebrations and fridge UI share one merge path — never compare bests against local scores alone.
 
 ## Gotchas
 
@@ -61,9 +65,13 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
   bogus KV namespace id fails the whole deploy.
 - Records for roster players deleted locally render as "Someone" and are not
   pushed (can't shape a SubmitRecord without a player).
-- First score on a difficulty celebrates as a family record (known tuning item).
+- `settingsStore` ghost/controls have writers but no settings UI yet — ghost
+  defaults on; button pad ignores `controls` and shows whenever the pointer is
+  coarse.
+- Empty fridge on a difficulty still celebrates the first score as family
+  best (correct); false positives from other devices were the bug, not this.
 
 ## Roadmap
 
 See CHANGELOG.md [Unreleased]: SFX, signature tetris-clear moment, daily seed
-mode, family-record tuning.
+mode, settings UI (ghost + hide pad).

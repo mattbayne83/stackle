@@ -32,7 +32,8 @@ and every score hangs on a shared family fridge door.
   and hang themselves on the fridge when you're back online.
 
 Controls: arrows + `Space` hard drop, `Z`/`X` rotate, `C` hold, `P` pause on
-keyboard; drag/tap/flick gestures on touch (with an optional button pad).
+keyboard; drag/tap/flick gestures on touch, plus an on-screen button pad on
+phones/tablets.
 
 ## Stack
 
@@ -41,9 +42,9 @@ canvas renderer · Cloudflare Pages Functions + KV. No game framework,
 no component library, no accounts.
 
 The game core (`src/engine/`) is pure, deterministic TypeScript — seeded
-7-bag, SRS wall kicks, lock delay, guideline scoring — with a 52-test suite
-and zero DOM imports. Design decisions trace to `tasks/design-brief.md` and
-`.impeccable.md`.
+7-bag, SRS wall kicks, lock delay, guideline scoring — with a 73-test suite
+(engine, leaderboard validation, fridge merge) and zero DOM imports in the
+engine. Design decisions trace to `tasks/design-brief.md` and `.impeccable.md`.
 
 ## Develop
 
@@ -51,7 +52,7 @@ and zero DOM imports. Design decisions trace to `tasks/design-brief.md` and
 npm install
 npm run dev        # game only (leaderboard API absent — sync stays quiet)
 npm run build && npm run dev:cf   # full stack with local KV emulation
-npm test           # engine + validation suites
+npm test           # engine + validation + fridge merge
 npm run typecheck && npm run lint
 ```
 
@@ -64,4 +65,4 @@ Deploys automatically on push to `main` (Cloudflare Pages, output `dist/`,
 - Sound effects (tasteful, optional)
 - A signature four-line-clear moment
 - Daily seed mode — same piece sequence for the whole family each day
-- Tune first-score-on-a-difficulty counting as a family record
+- Settings UI (ghost piece toggle, hide touch pad)

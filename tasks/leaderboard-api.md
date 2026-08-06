@@ -51,7 +51,10 @@ type SyncedRecord = SubmitRecord   // server stores what it accepted
   `markSynced(accepted)`.
 - GET on home mount (and after a successful POST); merge server records into
   fridge display by id (server union local, dedupe by id). Remote-only players
-  appear on the fridge via their PlayerRef.
+  appear on the fridge via their PlayerRef. Merge lives in `src/sync/merge.ts`
+  (`fridgeEntries` / `bestPerEntry` / `familyBest` / `personalBestEntry`).
+- Game-over personal-best and family-record celebrations use that same fridge
+  union (local + remote, name-folded) — never local scores alone.
 - Failures are silent-quiet: fridge shows local data + small "saving later"
   hint only when there are unsynced records AND the last sync attempt failed.
   Never an error wall.
