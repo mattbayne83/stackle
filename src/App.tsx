@@ -1,8 +1,29 @@
+import { useState } from 'react'
+import type { Difficulty } from './types'
+import { HomeScreen } from './screens/HomeScreen'
+import { PlayScreen } from './screens/PlayScreen'
+
+type Screen =
+  | { name: 'home' }
+  | { name: 'play'; playerId: string; difficulty: Difficulty }
+
 function App() {
+  const [screen, setScreen] = useState<Screen>({ name: 'home' })
+
+  if (screen.name === 'play') {
+    return (
+      <PlayScreen
+        playerId={screen.playerId}
+        difficulty={screen.difficulty}
+        onExit={() => setScreen({ name: 'home' })}
+      />
+    )
+  }
+
   return (
-    <main className="min-h-screen grid place-items-center">
-      <h1 className="font-display text-4xl font-black">Stackle</h1>
-    </main>
+    <HomeScreen
+      onPlay={(playerId, difficulty) => setScreen({ name: 'play', playerId, difficulty })}
+    />
   )
 }
 
