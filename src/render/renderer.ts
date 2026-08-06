@@ -67,6 +67,12 @@ export class BoardRenderer {
     this.darkQuery.removeEventListener('change', this.onTheme)
   }
 
+  /**
+   * One boardRect for everything: integer cell size, board = cell*10 x
+   * cell*20, centered in the canvas with integer offsets. Every draw pass
+   * (well, grid, cells, ghost, fx, frame) is expressed in coordinates
+   * relative to this rect's origin — nothing else measures the canvas.
+   */
   private resize(): void {
     const host = this.canvas.parentElement ?? this.canvas
     const rect = host.getBoundingClientRect()
@@ -251,11 +257,13 @@ export class BoardRenderer {
     ctx.restore()
 
     // A quiet inner edge so the well reads sunken, matching the .tray look.
+    // restore() re-applied the boardRect translate from the save() above, so
+    // this stroke is in board coordinates — same origin as the well and grid.
     ctx.globalAlpha = 0.5
     ctx.strokeStyle = palette.line
     ctx.lineWidth = 1
     ctx.beginPath()
-    ctx.roundRect(this.ox + 0.5, this.oy + shakeY + 0.5, this.boardW - 1, this.boardH - 1, wellR)
+    ctx.roundRect(0.5, 0.5, this.boardW - 1, this.boardH - 1, wellR)
     ctx.stroke()
     ctx.globalAlpha = 1
   }

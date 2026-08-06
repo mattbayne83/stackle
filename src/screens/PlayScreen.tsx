@@ -290,7 +290,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
     : ''
 
   return (
-    <main className="mx-auto flex h-dvh w-full max-w-6xl flex-col overflow-hidden px-4 pt-3 pb-2 lg:grid lg:grid-cols-[11rem_minmax(0,1fr)_13rem] lg:items-center lg:gap-10 lg:px-10 lg:py-8">
+    <main className="mx-auto flex h-dvh w-full flex-col overflow-hidden px-4 pt-3 pb-2 lg:grid lg:grid-cols-[10rem_auto_11rem] lg:content-center lg:items-start lg:justify-center lg:gap-5 lg:px-6 lg:py-6">
       {/* Phone HUD — quiet top strip */}
       <header className="flex items-end justify-between gap-4 lg:hidden">
         <div>
@@ -336,18 +336,21 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
           </div>
         )}
         {holdTray}
+        {/* The pause overlay owns resuming — this button goes quiet while paused. */}
         <button
-          aria-label={paused ? 'Resume' : 'Pause'}
+          aria-label="Pause"
           onClick={togglePause}
-          className="chunk flex h-12 items-center gap-2.5 px-4 font-semibold"
+          disabled={paused}
+          className="chunk flex h-12 items-center gap-2.5 px-4 font-semibold transition-opacity duration-200 disabled:pointer-events-none disabled:opacity-40"
         >
-          {paused ? <Play aria-hidden size={18} /> : <Pause aria-hidden size={18} />}
-          {paused ? 'Resume' : 'Pause'}
+          <Pause aria-hidden size={18} />
+          Pause
         </button>
       </aside>
 
-      {/* The well — hero on both layouts */}
-      <div className="relative mt-2.5 min-h-0 flex-1 lg:mt-0 lg:h-[min(86dvh,50rem)] lg:flex-none">
+      {/* The well — hero on both layouts. On laptop the container takes the
+          board's exact 1:2 aspect so the canvas is the well (no empty frame). */}
+      <div className="relative mt-2.5 min-h-0 flex-1 lg:mt-0 lg:aspect-[1/2] lg:h-[min(86dvh,50rem)] lg:w-auto lg:flex-none">
         <canvas ref={canvasRef} className="absolute inset-0 h-full w-full touch-none select-none" />
 
         {paused && (
