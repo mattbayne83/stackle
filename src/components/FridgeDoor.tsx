@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { Blocks } from './Blocks'
 import { Avatar } from './Avatar'
 import { DIFFICULTIES } from '../utils/difficulty'
-import { bestPerPlayer } from '../store/scoresStore'
+import { unsyncedFor, useSyncStore } from '../sync/leaderboard'
+import { bestPerEntry, fridgeEntries } from '../sync/merge'
 import type { Player, ScoreRecord } from '../types'
 
 const PIECE_COLOR: Record<'o' | 't' | 'i', string> = {
@@ -23,8 +25,15 @@ interface FridgeDoorProps {
 
 /** The family leaderboard, hung on the fridge like kids' drawings. */
 export function FridgeDoor({ players, records }: FridgeDoorProps) {
-  const byId = new Map(players.map((p) => [p.id, p]))
-  const hasAny = records.length > 0
+  const remoteRecords = useSyncStore((s) => s.remoteRecords)
+  const lastPushFailed = useSyncStore((s) => s.lastPushFailed)
+
+  const entries = useMemo(
+    () => fridgeEntries(records, remoteRecords, players),
+    [records, remoteRecords, players],
+  )
+  const hasAny = entries.length > 0
+  const waitingToSync = lastPushFailed && unsyncedFor(records, players).length > 0
 
   return (
     <section aria-label="Family records" className="chunk relative rounded-3xl p-5 pt-8 sm:p-6 sm:pt-9">
@@ -55,7 +64,7 @@ export function FridgeDoor({ players, records }: FridgeDoorProps) {
       ) : (
         <div className="grid gap-7">
           {DIFFICULTIES.map((d) => {
-            const bests = bestPerPlayer(records, d.id)
+            const bests = bestPerEntry(entries, d.id)
             return (
               <div key={d.id}>
                 <div className="mb-3 flex items-center gap-2">
@@ -70,7 +79,7 @@ export function FridgeDoor({ players, records }: FridgeDoorProps) {
                 ) : (
                   <ul className="grid gap-4">
                     {bests.map((r, i) => {
-                      const player = byId.get(r.playerId)
+                      const player = r.player
                       const holder = i === 0
                       return (
                         <li
@@ -108,6 +117,13 @@ export function FridgeDoor({ players, records }: FridgeDoorProps) {
             )
           })}
         </div>
+      )}
+
+      {waitingToSync && (
+        <p className="mt-6 text-xs text-ink-soft" style={{ transform: 'rotate(-0.5deg)' }}>
+          New scores are safe on this door — hanging them on the family fridge when
+          we&rsquo;re back online.
+        </p>
       )}
     </section>
   )

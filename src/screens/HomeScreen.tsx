@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Difficulty, Player } from '../types'
 import { useRosterStore } from '../store/rosterStore'
 import { useScoresStore } from '../store/scoresStore'
+import { syncOnHome } from '../sync/leaderboard'
 import { DIFFICULTIES } from '../utils/difficulty'
 import { playerAccent } from '../utils/player'
 import { Avatar } from '../components/Avatar'
@@ -24,6 +25,11 @@ export function HomeScreen({ onPlay }: HomeScreenProps) {
   const { players, lastPlayerId, addPlayer, updatePlayer, removePlayer, setLastPlayer } =
     useRosterStore()
   const records = useScoresStore((s) => s.records)
+
+  // Push any queued scores, then pull the shared fridge (quiet on failure).
+  useEffect(() => {
+    syncOnHome()
+  }, [])
 
   const [adding, setAdding] = useState(false)
   const [editing, setEditing] = useState<Player | null>(null)

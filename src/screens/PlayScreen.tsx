@@ -6,6 +6,7 @@ import type { Difficulty } from '../types'
 import { useRosterStore } from '../store/rosterStore'
 import { familyRecord, personalBest, useScoresStore } from '../store/scoresStore'
 import { settingsFor, useSettingsStore } from '../store/settingsStore'
+import { pushUnsynced } from '../sync/leaderboard'
 import { DIFFICULTY_LABEL } from '../utils/difficulty'
 import { Avatar } from '../components/Avatar'
 import { Blocks } from '../components/Blocks'
@@ -166,6 +167,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
         level: s.level,
         dateISO: new Date().toISOString(),
       })
+      void pushUnsynced() // fire-and-forget; quiet on failure
       setEnded({
         score: s.score,
         lines: s.lines,

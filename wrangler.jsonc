@@ -1,0 +1,17 @@
+// Cloudflare Pages config for Stackle.
+// Local dev: `npm run dev:cf` (build first — serves dist/ + functions/ with a
+// local KV simulation for STACKLE_KV; no real namespace needed).
+// Deploy: create a KV namespace (`npx wrangler kv namespace create STACKLE_KV`)
+// and replace the placeholder id below, then bind STACKLE_KV in the Pages
+// project settings if deploying via the dashboard/git integration.
+{
+  "name": "stackle",
+  "compatibility_date": "2026-08-01",
+  "pages_build_output_dir": "dist",
+  "kv_namespaces": [
+    {
+      "binding": "STACKLE_KV",
+      "id": "REPLACE_WITH_REAL_KV_NAMESPACE_ID"
+    }
+  ]
+}
