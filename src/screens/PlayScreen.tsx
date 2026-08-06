@@ -4,9 +4,10 @@ import type { GameAction, GameState, PieceId } from '../engine'
 import { applyAction, cellsOf, createGame } from '../engine'
 import type { Difficulty } from '../types'
 import { useRosterStore } from '../store/rosterStore'
-import { familyRecord, personalBest, useScoresStore } from '../store/scoresStore'
+import { useScoresStore } from '../store/scoresStore'
 import { settingsFor, useSettingsStore } from '../store/settingsStore'
-import { pushUnsynced } from '../sync/leaderboard'
+import { pushUnsynced, useSyncStore } from '../sync/leaderboard'
+import { familyBest, fridgeEntries, personalBestEntry } from '../sync/merge'
 import { DIFFICULTY_LABEL } from '../utils/difficulty'
 import { Avatar } from '../components/Avatar'
 import { Blocks } from '../components/Blocks'
@@ -102,7 +103,6 @@ function Tray({
 export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
   const player = useRosterStore((s) => s.players.find((p) => p.id === playerId))
   const ghostSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).ghost)
-  const controlsPref = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).controls)
 
   const [hud, setHud] = useState<Hud>(INITIAL_HUD)
   const [ended, setEnded] = useState<EndState | null>(null)
@@ -114,8 +114,10 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
   const dispatchRef = useRef<(action: GameAction) => void>(() => {})
   const ghostRef = useRef(true)
 
+  // Touch devices always get the button pad; gestures stay available too.
+  // (settingsStore.controls has no UI writer yet — was an unreachable default.)
   const coarse = useMemo(() => window.matchMedia('(pointer: coarse)').matches, [])
-  const showButtons = coarse && controlsPref === 'buttons'
+  const showButtons = coarse
 
   useEffect(() => {
     // Chill always gets the ghost; elsewhere it's the player's call.
@@ -156,8 +158,12 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
       if (saved) return
       saved = true
       const store = useScoresStore.getState()
-      const pb = personalBest(store.records, playerId, difficulty)
-      const fam = familyRecord(store.records, difficulty)
+      const players = useRosterStore.getState().players
+      const remote = useSyncStore.getState().remoteRecords
+      // Fridge union (local + remote, name-folded) so celebrations match the door.
+      const fridge = fridgeEntries(store.records, remote, players)
+      const pb = personalBestEntry(fridge, playerId, difficulty)
+      const fam = familyBest(fridge, difficulty)
       const rotation = store.records.length
       store.addScore({
         playerId,

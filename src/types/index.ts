@@ -17,7 +17,7 @@ export interface ScoreRecord {
   lines: number
   level: number
   dateISO: string
-  /** False until a future sync layer posts it to the shared leaderboard. */
+  /** False until the shared leaderboard accepts this record. */
   synced: boolean
 }
 

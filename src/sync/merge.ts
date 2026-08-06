@@ -81,3 +81,23 @@ export function bestPerEntry(entries: FridgeEntry[], difficulty: Difficulty): Fr
   }
   return [...best.values()].sort((a, b) => b.score - a.score)
 }
+
+/** Top score on a difficulty across the full fridge (local + remote). */
+export function familyBest(
+  entries: FridgeEntry[],
+  difficulty: Difficulty,
+): FridgeEntry | undefined {
+  return bestPerEntry(entries, difficulty)[0]
+}
+
+/**
+ * Personal best for one roster player on a difficulty. Uses playerKey so
+ * remote scores folded by name count as the same person.
+ */
+export function personalBestEntry(
+  entries: FridgeEntry[],
+  playerId: string,
+  difficulty: Difficulty,
+): FridgeEntry | undefined {
+  return bestPerEntry(entries, difficulty).find((e) => e.playerKey === playerId)
+}

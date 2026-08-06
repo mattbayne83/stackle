@@ -4,12 +4,24 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 
 ## [Unreleased]
 
+### Fixed
+
+- Game-over personal/family records now compare against the full fridge
+  (local + remote, name-folded) so a device without the current top score
+  no longer confetti-celebrates a false family record
+- Touch devices always show the on-screen button pad (was gated on a
+  settings preference with no UI, so it was unreachable)
+
+### Changed
+
+- App TypeScript config enables `strict` (matches docs and `functions/`)
+
 ### Planned
 
 - Sound effects (tasteful, optional, muted by default consideration)
 - Signature four-line-clear moment (currently reuses the standard clear animation scaled up)
 - Daily seed mode — same piece sequence for the whole family each day
-- Tune: first score on a difficulty currently celebrates as a family record
+- Settings UI for ghost piece / hide button pad (store already supports it)
 
 ## [1.0.0] — 2026-08-06
 

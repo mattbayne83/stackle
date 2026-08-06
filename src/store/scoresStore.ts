@@ -6,7 +6,7 @@ import { newId } from '../utils/player'
 interface ScoresState {
   records: ScoreRecord[]
   addScore: (record: Omit<ScoreRecord, 'id' | 'synced'>) => ScoreRecord
-  /** Hook for the future sync layer: flip records to synced once posted. */
+  /** Flip accepted ids to synced after a successful push. */
   markSynced: (ids: string[]) => void
 }
 
@@ -21,10 +21,13 @@ export const useScoresStore = create<ScoresState>()(
         return created
       },
 
-      markSynced: (ids) =>
+      markSynced: (ids) => {
+        if (ids.length === 0) return
+        const accepted = new Set(ids)
         set((s) => ({
-          records: s.records.map((r) => (ids.includes(r.id) ? { ...r, synced: true } : r)),
-        })),
+          records: s.records.map((r) => (accepted.has(r.id) ? { ...r, synced: true } : r)),
+        }))
+      },
     }),
     { name: 'stackle-scores' },
   ),
