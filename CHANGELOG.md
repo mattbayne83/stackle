@@ -15,6 +15,11 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 ### Changed
 
 - App TypeScript config enables `strict` (matches docs and `functions/`)
+- Phone home screen fits the whole play flow (roster, all three difficulty
+  tiles, Today's stack toggle) in the first viewport: tiles become compact
+  horizontal rows below the `sm` breakpoint and mobile spacing tightens —
+  was ~2.5 screens of scrolling before reaching Turbo. Laptop layout and
+  the fridge-below-the-fold placement are unchanged
 
 ### Added
 

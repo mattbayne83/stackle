@@ -59,14 +59,14 @@ export function HomeScreen({ daily, onDailyChange, onPlay }: HomeScreenProps) {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-5 py-8 lg:py-12">
+    <main className="mx-auto max-w-6xl px-5 py-5 sm:py-8 lg:py-12">
       <Wordmark />
 
-      <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-14">
-        <div className="grid content-start gap-10">
+      <div className="mt-5 grid gap-8 sm:mt-8 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:gap-14">
+        <div className="grid content-start gap-6 sm:gap-10">
           {/* Player picker */}
           <section aria-label="Players">
-            <div className="mb-4 flex items-baseline gap-4">
+            <div className="mb-3 flex items-baseline gap-4 sm:mb-4">
               <h2 className="font-display text-2xl font-extrabold">Who&rsquo;s playing?</h2>
               <button
                 onClick={() => {
@@ -161,12 +161,14 @@ export function HomeScreen({ daily, onDailyChange, onPlay }: HomeScreenProps) {
 
           {/* Difficulty tiles */}
           <section aria-label="Difficulty">
-            <div className="mb-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            <div className="mb-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 sm:mb-4">
               <h2 className="font-display text-2xl font-extrabold">Pick your pace</h2>
               {selected && <p className="text-sm text-ink-soft">stacking as {selected.name}</p>}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
+            {/* Phones get compact rows so all three fit above the fold;
+                sm+ keeps the tall three-across toy tiles. */}
+            <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.id}
@@ -176,7 +178,7 @@ export function HomeScreen({ daily, onDailyChange, onPlay }: HomeScreenProps) {
                     setLastPlayer(selectedId)
                     onPlay(selectedId, d.id)
                   }}
-                  className="chunk grid min-h-32 content-between gap-4 p-5"
+                  className="chunk flex items-center gap-4 px-4 py-3 sm:grid sm:min-h-32 sm:content-between sm:p-5"
                 >
                   <Blocks cells={d.cells} color={PIECE_COLOR[d.piece]} size={13} />
                   <span className="grid gap-0.5">
@@ -187,7 +189,7 @@ export function HomeScreen({ daily, onDailyChange, onPlay }: HomeScreenProps) {
               ))}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 sm:mt-4">
               <Toggle label="Today&rsquo;s stack" checked={daily} onChange={onDailyChange} />
               <p className="text-sm text-ink-soft">Same pieces for everyone today.</p>
             </div>
