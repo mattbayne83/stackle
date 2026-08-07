@@ -17,7 +17,8 @@ is banned here.
 React 19 + TypeScript (strict — both app and functions) + Vite + Tailwind CSS 4
 (tokens in `src/index.css` @theme) + Zustand 5 (persist) + Vitest. Lint: oxlint.
 Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
-`tasks/leaderboard-api.md`. **73 tests** (engine + validate + fridge merge).
+`tasks/leaderboard-api.md`. **77 tests** (engine + validate + fridge merge +
+daily seed).
 
 ## Architecture
 
@@ -32,7 +33,8 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
 - `src/input/` — keyboard (DAS 160 / ARR 40, self-implemented repeat) + touch
   gestures (drag/tap/flick) + on-screen button pad on coarse pointers
   (gestures stay available; pad always shown on touch).
-- `src/screens/` — HomeScreen (roster, difficulty tiles, fridge door),
+- `src/screens/` — HomeScreen (roster, difficulty tiles, "Today's stack"
+  daily-seed toggle, fridge door),
   PlayScreen (loop host, pause, kind game-over; engine state in a ref, HUD
   numbers mirrored into React at low frequency). Game-over personal/family
   bests use the full fridge union (`fridgeEntries`), not local-only scores.
@@ -72,7 +74,10 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
   defaults to `'buttons'` — pad shown on touch unless turned off.
 - Empty fridge on a difficulty still celebrates the first score as family
   best (correct); false positives from other devices were the bug, not this.
+- "Today's stack" is session-only React state (reload resets to free play)
+  and hashes the *local* calendar date — one household, one timezone, by
+  design. Scores post to the normal per-difficulty leaderboards.
 
 ## Roadmap
 
-See CHANGELOG.md [Unreleased]: SFX, daily seed mode.
+See CHANGELOG.md [Unreleased]: SFX.

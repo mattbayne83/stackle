@@ -9,12 +9,15 @@ type Screen =
 
 function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
+  // "Today's stack" — session-wide, resets on reload so free play stays the default.
+  const [daily, setDaily] = useState(false)
 
   if (screen.name === 'play') {
     return (
       <PlayScreen
         playerId={screen.playerId}
         difficulty={screen.difficulty}
+        daily={daily}
         onExit={() => setScreen({ name: 'home' })}
       />
     )
@@ -22,6 +25,8 @@ function App() {
 
   return (
     <HomeScreen
+      daily={daily}
+      onDailyChange={setDaily}
       onPlay={(playerId, difficulty) => setScreen({ name: 'play', playerId, difficulty })}
     />
   )

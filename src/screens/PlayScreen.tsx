@@ -8,6 +8,7 @@ import { useScoresStore } from '../store/scoresStore'
 import { settingsFor, useSettingsStore } from '../store/settingsStore'
 import { pushUnsynced, useSyncStore } from '../sync/leaderboard'
 import { familyBest, fridgeEntries, personalBestEntry } from '../sync/merge'
+import { dailySeed } from '../utils/daily'
 import { DIFFICULTY_LABEL } from '../utils/difficulty'
 import { Avatar } from '../components/Avatar'
 import { Blocks } from '../components/Blocks'
@@ -23,6 +24,8 @@ import { TouchButtons } from '../input/TouchButtons'
 interface PlayScreenProps {
   playerId: string
   difficulty: Difficulty
+  /** "Today's stack" — seed from the calendar day so the family shares pieces. */
+  daily: boolean
   onExit: () => void
 }
 
@@ -101,7 +104,7 @@ function Tray({
   )
 }
 
-export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
+export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenProps) {
   const player = useRosterStore((s) => s.players.find((p) => p.id === playerId))
   const ghostSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).ghost)
   const padSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).controls)
@@ -139,7 +142,12 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
     const renderer = new BoardRenderer(canvas)
     const fx = new FxState(!reduced)
     let saved = false
-    stateRef.current = createGame(difficulty, Date.now())
+    // "One more go" under today's stack replays the very same sequence —
+    // that's the point: the whole family wrestles the same blocks.
+    stateRef.current = createGame(
+      difficulty,
+      daily ? dailySeed(difficulty, new Date()) : Date.now(),
+    )
 
     let hudKey = ''
     const syncHud = (s: GameState): void => {
@@ -243,7 +251,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
       renderer.destroy()
       dispatchRef.current = () => {}
     }
-  }, [runId, difficulty, playerId])
+  }, [runId, difficulty, playerId, daily])
 
   // Family-record celebration: block confetti in the player's color.
   useEffect(() => {
@@ -311,6 +319,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
           </p>
           <p className="mt-1.5 text-xs text-ink-soft">
             {hud.lines} lines · level {hud.level}
+            {daily && ' · today’s stack'}
           </p>
         </div>
         <button
@@ -343,7 +352,10 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
             <Avatar player={player} size={42} />
             <div className="min-w-0">
               <p className="single-line font-semibold">{player.name}</p>
-              <p className="text-xs text-ink-soft">{DIFFICULTY_LABEL[difficulty]}</p>
+              <p className="text-xs text-ink-soft">
+                {DIFFICULTY_LABEL[difficulty]}
+                {daily && ' · today’s stack'}
+              </p>
             </div>
           </div>
         )}

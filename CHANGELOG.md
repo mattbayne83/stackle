@@ -26,11 +26,13 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 - The Stackle: four-line clears now burst into tumbling toy blocks with a
   deeper well thud, an accent glow, and the game's name stamped across the
   cleared band — the signature moment the design brief called for
+- Today's stack: a home-screen toggle that seeds every run from the local
+  calendar day, so the whole family wrestles the same piece sequence —
+  "One more go" replays the same deal; scores post to the normal fridge
 
 ### Planned
 
 - Sound effects (tasteful, optional, muted by default consideration)
-- Daily seed mode — same piece sequence for the whole family each day
 
 ## [1.0.0] — 2026-08-06
 
