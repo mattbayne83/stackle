@@ -1,5 +1,5 @@
 import type { Cell, GameState } from '../engine'
-import { COLS, ROWS, cellsOf } from '../engine'
+import { COLS, HIDDEN_ROWS, ROWS, cellsOf } from '../engine'
 
 /** Durations (ms) — decorative overlays only; engine state is already final. */
 export const CLEAR_FLASH_MS = 80
@@ -8,6 +8,7 @@ export const LOCK_MS = 150
 export const SQUASH_MS = 120
 export const SHAKE_MS = 120
 export const GLOW_MS = 600
+export const STACKLE_MS = 950
 
 export interface ClearFx {
   start: number
@@ -15,6 +16,25 @@ export interface ClearFx {
   rows: Array<{ y: number; cells: Cell[] }>
   /** Per post-clear row index: how many cells that row just fell. */
   drop: number[]
+}
+
+/** One cleared cell turned loose toy block. Cell units, so resizes are safe. */
+export interface StackleParticle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  rot: number
+  vr: number
+  id: NonNullable<Cell>
+}
+
+/** The signature four-line moment: the cleared band bursts into blocks. */
+export interface StackleFx {
+  start: number
+  /** Visible-row center of the cleared band — where the word stamps. */
+  centerY: number
+  particles: StackleParticle[]
 }
 
 export interface LockFx {
@@ -34,8 +54,10 @@ export interface LockFx {
 export class FxState {
   enabled: boolean
   clear: ClearFx | null = null
+  stackle: StackleFx | null = null
   lock: LockFx | null = null
   shakeStart = -1
+  shakeAmp = 2
   glowStart = -1
 
   constructor(enabled: boolean) {
@@ -44,8 +66,10 @@ export class FxState {
 
   reset(): void {
     this.clear = null
+    this.stackle = null
     this.lock = null
     this.shakeStart = -1
+    this.shakeAmp = 2
     this.glowStart = -1
   }
 
@@ -61,6 +85,7 @@ export class FxState {
       if (ev.type === 'hardDrop') {
         hadHardDrop = true
         this.shakeStart = now
+        this.shakeAmp = 2
       } else if (ev.type === 'lock') {
         lockedCells = cellsOf(ev.piece)
         lockedId = ev.piece.id
@@ -86,6 +111,33 @@ export class FxState {
           newIdx++
         }
         this.clear = { start: now, rows, drop }
+
+        // The signature Stackle: four lines burst into loose toy blocks
+        // instead of scaling away, with the deep thud + glow to match.
+        if (ev.count === 4) {
+          const particles: StackleParticle[] = []
+          for (const snap of rows) {
+            for (let c = 0; c < COLS; c++) {
+              const id = snap.cells[c]
+              if (id === null) continue
+              particles.push({
+                x: c + 0.5,
+                y: snap.y - HIDDEN_ROWS + 0.5,
+                vx: (Math.random() - 0.5) * 0.009,
+                vy: -(0.006 + Math.random() * 0.007),
+                rot: (Math.random() - 0.5) * 0.4,
+                vr: (Math.random() - 0.5) * 0.008,
+                id,
+              })
+            }
+          }
+          const centerY =
+            rows.reduce((sum, r) => sum + r.y - HIDDEN_ROWS + 0.5, 0) / rows.length
+          this.stackle = { start: now, centerY, particles }
+          this.shakeStart = now
+          this.shakeAmp = 3.5
+          this.glowStart = now
+        }
       }
     }
 
@@ -104,6 +156,7 @@ export class FxState {
   /** Drop expired overlays so the renderer's hot path stays branch-cheap. */
   prune(now: number): void {
     if (this.clear && now - this.clear.start > CLEAR_MS) this.clear = null
+    if (this.stackle && now - this.stackle.start > STACKLE_MS) this.stackle = null
     if (this.lock && now - this.lock.start > Math.max(LOCK_MS, SQUASH_MS)) this.lock = null
     if (this.shakeStart >= 0 && now - this.shakeStart > SHAKE_MS) this.shakeStart = -1
     if (this.glowStart >= 0 && now - this.glowStart > GLOW_MS) this.glowStart = -1

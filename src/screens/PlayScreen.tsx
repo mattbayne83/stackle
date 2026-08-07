@@ -8,6 +8,7 @@ import { useScoresStore } from '../store/scoresStore'
 import { settingsFor, useSettingsStore } from '../store/settingsStore'
 import { pushUnsynced, useSyncStore } from '../sync/leaderboard'
 import { familyBest, fridgeEntries, personalBestEntry } from '../sync/merge'
+import { dailySeed } from '../utils/daily'
 import { DIFFICULTY_LABEL } from '../utils/difficulty'
 import { Avatar } from '../components/Avatar'
 import { Blocks } from '../components/Blocks'
@@ -15,6 +16,8 @@ import { BoardRenderer } from '../render/renderer'
 import { FxState } from '../render/fx'
 import { startLoop } from '../render/loop'
 import { launchConfetti } from '../render/confetti'
+import { Toggle } from '../components/Toggle'
+import { SfxPlayer } from '../audio/sfx'
 import { attachKeyboard } from '../input/keyboard'
 import { attachTouch } from '../input/touch'
 import { TouchButtons } from '../input/TouchButtons'
@@ -22,6 +25,8 @@ import { TouchButtons } from '../input/TouchButtons'
 interface PlayScreenProps {
   playerId: string
   difficulty: Difficulty
+  /** "Today's stack" — seed from the calendar day so the family shares pieces. */
+  daily: boolean
   onExit: () => void
 }
 
@@ -100,9 +105,14 @@ function Tray({
   )
 }
 
-export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
+export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenProps) {
   const player = useRosterStore((s) => s.players.find((p) => p.id === playerId))
   const ghostSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).ghost)
+  const padSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).controls)
+  const soundSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).sound)
+  const setGhost = useSettingsStore((s) => s.setGhost)
+  const setControls = useSettingsStore((s) => s.setControls)
+  const setSound = useSettingsStore((s) => s.setSound)
 
   const [hud, setHud] = useState<Hud>(INITIAL_HUD)
   const [ended, setEnded] = useState<EndState | null>(null)
@@ -113,16 +123,23 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
   const stateRef = useRef<GameState | null>(null)
   const dispatchRef = useRef<(action: GameAction) => void>(() => {})
   const ghostRef = useRef(true)
+  const sfxRef = useRef<SfxPlayer | null>(null)
+  if (!sfxRef.current) sfxRef.current = new SfxPlayer()
 
-  // Touch devices always get the button pad; gestures stay available too.
-  // (settingsStore.controls has no UI writer yet — was an unreachable default.)
+  // Touch devices get the button pad unless the player turns it off in the
+  // pause overlay; gestures stay available either way.
   const coarse = useMemo(() => window.matchMedia('(pointer: coarse)').matches, [])
-  const showButtons = coarse
+  const showButtons = coarse && padSetting === 'buttons'
 
   useEffect(() => {
     // Chill always gets the ghost; elsewhere it's the player's call.
     ghostRef.current = difficulty === 'chill' ? true : ghostSetting
   }, [difficulty, ghostSetting])
+
+  useEffect(() => {
+    sfxRef.current?.setEnabled(soundSetting)
+  }, [soundSetting])
+  useEffect(() => () => sfxRef.current?.destroy(), [])
 
   // The whole run lives in this effect: engine state stays in a ref (never
   // React state per-frame); only HUD-visible numbers mirror into React, and
@@ -135,7 +152,12 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
     const renderer = new BoardRenderer(canvas)
     const fx = new FxState(!reduced)
     let saved = false
-    stateRef.current = createGame(difficulty, Date.now())
+    // "One more go" under today's stack replays the very same sequence —
+    // that's the point: the whole family wrestles the same blocks.
+    stateRef.current = createGame(
+      difficulty,
+      daily ? dailySeed(difficulty, new Date()) : Date.now(),
+    )
 
     let hudKey = ''
     const syncHud = (s: GameState): void => {
@@ -192,6 +214,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
       stateRef.current = next
       if (next.events.length > 0) {
         fx.onEvents(prev, next, performance.now())
+        sfxRef.current?.onEvents(next.events)
         for (const ev of next.events) {
           if (ev.type === 'gameOver') finish(next)
         }
@@ -239,7 +262,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
       renderer.destroy()
       dispatchRef.current = () => {}
     }
-  }, [runId, difficulty, playerId])
+  }, [runId, difficulty, playerId, daily])
 
   // Family-record celebration: block confetti in the player's color.
   useEffect(() => {
@@ -307,6 +330,7 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
           </p>
           <p className="mt-1.5 text-xs text-ink-soft">
             {hud.lines} lines · level {hud.level}
+            {daily && ' · today’s stack'}
           </p>
         </div>
         <button
@@ -339,7 +363,10 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
             <Avatar player={player} size={42} />
             <div className="min-w-0">
               <p className="single-line font-semibold">{player.name}</p>
-              <p className="text-xs text-ink-soft">{DIFFICULTY_LABEL[difficulty]}</p>
+              <p className="text-xs text-ink-soft">
+                {DIFFICULTY_LABEL[difficulty]}
+                {daily && ' · today’s stack'}
+              </p>
             </div>
           </div>
         )}
@@ -377,6 +404,29 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
                 <button onClick={onExit} className="chunk h-12 px-6 text-center font-semibold">
                   Back home
                 </button>
+              </div>
+              {/* Per-player tweaks live here — no settings screen. Chill keeps
+                  its ghost always on; the pad toggle only matters on touch. */}
+              <div className="mt-4 grid justify-items-stretch gap-1">
+                {difficulty !== 'chill' && (
+                  <Toggle
+                    label="Ghost piece"
+                    checked={ghostSetting}
+                    onChange={(on) => setGhost(playerId, on)}
+                  />
+                )}
+                {coarse && (
+                  <Toggle
+                    label="Button pad"
+                    checked={padSetting === 'buttons'}
+                    onChange={(on) => setControls(playerId, on ? 'buttons' : 'gestures')}
+                  />
+                )}
+                <Toggle
+                  label="Sound"
+                  checked={soundSetting}
+                  onChange={(on) => setSound(playerId, on)}
+                />
               </div>
             </div>
           </div>

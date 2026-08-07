@@ -26,4 +26,5 @@ export type ControlPreference = 'gestures' | 'buttons'
 export interface PlayerSettings {
   ghost: boolean
   controls: ControlPreference
+  sound: boolean
 }

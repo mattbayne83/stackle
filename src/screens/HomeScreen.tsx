@@ -9,6 +9,7 @@ import { Avatar } from '../components/Avatar'
 import { Blocks } from '../components/Blocks'
 import { FridgeDoor } from '../components/FridgeDoor'
 import { PlayerForm } from '../components/PlayerForm'
+import { Toggle } from '../components/Toggle'
 import { Wordmark } from '../components/Wordmark'
 
 const PIECE_COLOR: Record<'o' | 't' | 'i', string> = {
@@ -18,10 +19,12 @@ const PIECE_COLOR: Record<'o' | 't' | 'i', string> = {
 }
 
 interface HomeScreenProps {
+  daily: boolean
+  onDailyChange: (daily: boolean) => void
   onPlay: (playerId: string, difficulty: Difficulty) => void
 }
 
-export function HomeScreen({ onPlay }: HomeScreenProps) {
+export function HomeScreen({ daily, onDailyChange, onPlay }: HomeScreenProps) {
   const { players, lastPlayerId, addPlayer, updatePlayer, removePlayer, setLastPlayer } =
     useRosterStore()
   const records = useScoresStore((s) => s.records)
@@ -182,6 +185,11 @@ export function HomeScreen({ onPlay }: HomeScreenProps) {
                   </span>
                 </button>
               ))}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <Toggle label="Today&rsquo;s stack" checked={daily} onChange={onDailyChange} />
+              <p className="text-sm text-ink-soft">Same pieces for everyone today.</p>
             </div>
           </section>
         </div>

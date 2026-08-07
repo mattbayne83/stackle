@@ -17,7 +17,8 @@ is banned here.
 React 19 + TypeScript (strict — both app and functions) + Vite + Tailwind CSS 4
 (tokens in `src/index.css` @theme) + Zustand 5 (persist) + Vitest. Lint: oxlint.
 Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
-`tasks/leaderboard-api.md`. **73 tests** (engine + validate + fridge merge).
+`tasks/leaderboard-api.md`. **80 tests** (engine + validate + fridge merge +
+daily seed + settings).
 
 ## Architecture
 
@@ -27,16 +28,23 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
   thread the exact object returned by `createGame`/`applyAction` back in.
 - `src/render/` — canvas renderer + rAF loop (engine draws nothing); resolves
   CSS `light-dark()` tokens at runtime via computed-style probe; fx overlays
-  (clear/lock/drop/level) live in `fx.ts`, disabled under reduced motion.
+  (clear/lock/drop/level + the "Stackle!" four-line burst) live in `fx.ts`,
+  disabled under reduced motion.
 - `src/input/` — keyboard (DAS 160 / ARR 40, self-implemented repeat) + touch
   gestures (drag/tap/flick) + on-screen button pad on coarse pointers
   (gestures stay available; pad always shown on touch).
-- `src/screens/` — HomeScreen (roster, difficulty tiles, fridge door),
+- `src/screens/` — HomeScreen (roster, difficulty tiles, "Today's stack"
+  daily-seed toggle, fridge door),
   PlayScreen (loop host, pause, kind game-over; engine state in a ref, HUD
   numbers mirrored into React at low frequency). Game-over personal/family
   bests use the full fridge union (`fridgeEntries`), not local-only scores.
-- `src/store/` — Zustand persist: roster, settings (ghost/controls; no UI yet),
-  local scores (`synced` flag per record).
+- `src/store/` — Zustand persist: roster, settings (ghost/controls/sound,
+  per player, edited from the pause overlay; defaults spread under stored
+  entries so old records pick up new fields), local scores (`synced` flag
+  per record).
+- `src/audio/` — `SfxPlayer`: synthesized WebAudio kit (no asset files),
+  fed the engine event batch from PlayScreen's dispatch; lazy AudioContext
+  so it only starts after a user gesture. Muted by default.
 - `src/sync/` — leaderboard client: push-unsynced / fetch-remote (single-flight
   with 4s cooldown); `merge.ts` unions local + remote by id, folds cross-device
   players by case-insensitive name (`familyBest` / `personalBestEntry` for
@@ -65,13 +73,17 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
   bogus KV namespace id fails the whole deploy.
 - Records for roster players deleted locally render as "Someone" and are not
   pushed (can't shape a SubmitRecord without a player).
-- `settingsStore` ghost/controls have writers but no settings UI yet — ghost
-  defaults on; button pad ignores `controls` and shows whenever the pointer is
-  coarse.
+- Settings live in the pause overlay, not a screen: ghost toggle hidden on
+  Chill (always on there), pad toggle only on coarse pointers, sound
+  always offered (muted default). `controls` defaults to `'buttons'` —
+  pad shown on touch unless turned off.
 - Empty fridge on a difficulty still celebrates the first score as family
   best (correct); false positives from other devices were the bug, not this.
+- "Today's stack" is session-only React state (reload resets to free play)
+  and hashes the *local* calendar date — one household, one timezone, by
+  design. Scores post to the normal per-difficulty leaderboards.
 
 ## Roadmap
 
-See CHANGELOG.md [Unreleased]: SFX, signature tetris-clear moment, daily seed
-mode, settings UI (ghost + hide pad).
+Backlog clear as of 2026-08-07 — CHANGELOG.md [Unreleased] lists what
+shipped (settings UI, the Stackle moment, daily seed, SFX).

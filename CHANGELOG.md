@@ -20,13 +20,19 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 
 - Fridge merge unit tests (`src/sync/merge.test.ts`) covering name-fold,
   id dedupe, and family/personal best helpers
-
-### Planned
-
-- Sound effects (tasteful, optional, muted by default consideration)
-- Signature four-line-clear moment (currently reuses the standard clear animation scaled up)
-- Daily seed mode — same piece sequence for the whole family each day
-- Settings UI for ghost piece / hide button pad (store already supports it)
+- Per-player settings in the pause overlay: ghost piece toggle (Chill keeps
+  its ghost always on) and a button pad toggle on touch devices — no
+  settings screen, just two toy switches where they're needed
+- The Stackle: four-line clears now burst into tumbling toy blocks with a
+  deeper well thud, an accent glow, and the game's name stamped across the
+  cleared band — the signature moment the design brief called for
+- Today's stack: a home-screen toggle that seeds every run from the local
+  calendar day, so the whole family wrestles the same piece sequence —
+  "One more go" replays the same deal; scores post to the normal fridge
+- Sound: a tiny synthesized WebAudio kit (no asset files) — soft lock
+  thock, weightier hard-drop thud, pentatonic pops per cleared line, an
+  ascending arpeggio for the Stackle, gentle level-up and game-over notes.
+  Muted by default; per-player Sound switch joins the pause overlay
 
 ## [1.0.0] — 2026-08-06
 
