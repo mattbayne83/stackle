@@ -3,7 +3,7 @@ import { COLS, HIDDEN_ROWS, ROWS, cellsOf, ghostRow } from '../engine'
 import type { Palette } from './palette'
 import { resolvePalette } from './palette'
 import type { FxState } from './fx'
-import { CLEAR_FLASH_MS, CLEAR_MS, GLOW_MS, LOCK_MS, SHAKE_MS, SQUASH_MS } from './fx'
+import { CLEAR_FLASH_MS, CLEAR_MS, GLOW_MS, LOCK_MS, SHAKE_MS, SQUASH_MS, STACKLE_MS } from './fx'
 
 const VISIBLE_ROWS = ROWS - HIDDEN_ROWS
 
@@ -95,10 +95,10 @@ export class BoardRenderer {
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
     ctx.clearRect(0, 0, this.cssW, this.cssH)
 
-    // Hard-drop thud: the whole well dips, never more than 2px.
+    // Hard-drop thud: the whole well dips — a touch deeper for a Stackle.
     let shakeY = 0
     if (fx.shakeStart >= 0) {
-      shakeY = 2 * (1 - easeOutQuint((now - fx.shakeStart) / SHAKE_MS))
+      shakeY = fx.shakeAmp * (1 - easeOutQuint((now - fx.shakeStart) / SHAKE_MS))
     }
     ctx.translate(this.ox, this.oy + shakeY)
 
@@ -152,8 +152,9 @@ export class BoardRenderer {
     }
 
     // Cleared-row snapshot: bright flash, then the rows pop out while the
-    // stack above collapses into the gap.
-    if (clear) {
+    // stack above collapses into the gap. On a Stackle the burst particles
+    // take over after the flash, so the scale-out is skipped.
+    if (clear && !(fx.stackle && clearT > CLEAR_FLASH_MS)) {
       const fading = clearT > CLEAR_FLASH_MS
       const p = fading ? (clearT - CLEAR_FLASH_MS) / (CLEAR_MS - CLEAR_FLASH_MS) : 0
       const alpha = fading ? 1 - p : 1
@@ -239,6 +240,55 @@ export class BoardRenderer {
       }
       for (const c of this.lastCells) {
         this.drawCell(c.col * cell, (c.row - HIDDEN_ROWS) * cell, palette.piece[active.id])
+      }
+    }
+
+    // The Stackle moment: cleared cells tumble as loose toy blocks while
+    // the game's own name stamps across the band. Same physics language as
+    // the family-record confetti — gravity and ease-out, never bounce.
+    const stackle = fx.stackle
+    if (stackle) {
+      const t = now - stackle.start - CLEAR_FLASH_MS
+      if (t > 0) {
+        const life = Math.min(1, t / (STACKLE_MS - CLEAR_FLASH_MS))
+        const fade = life > 0.72 ? Math.max(0, 1 - (life - 0.72) / 0.28) : 1
+        const size = cell * 0.82
+        const gravity = 0.000042 // cells per ms², tuned to clear the well by the end
+        for (const p of stackle.particles) {
+          const x = (p.x + p.vx * t) * cell
+          const y = (p.y + p.vy * t + gravity * t * t * 0.5) * cell
+          if (y > this.boardH + size) continue
+          ctx.save()
+          ctx.globalAlpha = fade
+          ctx.translate(x, y)
+          ctx.rotate(p.rot + p.vr * t)
+          ctx.fillStyle = palette.piece[p.id]
+          ctx.beginPath()
+          ctx.roundRect(-size / 2, -size / 2, size, size, size * 0.22)
+          ctx.fill()
+          ctx.fillStyle = 'oklch(0.99 0.01 90 / 0.35)'
+          ctx.fillRect(-size / 2, -size / 2, size, size * 0.2)
+          ctx.restore()
+        }
+
+        ctx.save()
+        ctx.globalAlpha = Math.min(1, t / 140) * fade
+        let px = cell * 1.35
+        ctx.font = `800 ${px}px "Hepta Slab", serif`
+        const wordW = ctx.measureText('Stackle!').width
+        const maxW = this.boardW * 0.88
+        if (wordW > maxW) {
+          px *= maxW / wordW
+          ctx.font = `800 ${px}px "Hepta Slab", serif`
+        }
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.translate(this.boardW / 2, stackle.centerY * cell - 10 * easeOutQuint(life))
+        ctx.rotate(-0.045)
+        ctx.fillStyle = palette.ink
+        ctx.fillText('Stackle!', 0, 0)
+        ctx.restore()
+        ctx.globalAlpha = 1
       }
     }
 

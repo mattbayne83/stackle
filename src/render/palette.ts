@@ -21,6 +21,7 @@ export interface Palette {
   piece: Record<PieceId, string>
   well: string
   line: string
+  ink: string
   accent: string
   surface: string
 }
@@ -38,6 +39,7 @@ export function resolvePalette(el: HTMLElement): Palette {
     piece,
     well: probe('--color-well'),
     line: probe('--color-line'),
+    ink: probe('--color-ink'),
     accent: probe('--color-accent'),
     surface: probe('--color-surface'),
   }

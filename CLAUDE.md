@@ -27,7 +27,8 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
   thread the exact object returned by `createGame`/`applyAction` back in.
 - `src/render/` — canvas renderer + rAF loop (engine draws nothing); resolves
   CSS `light-dark()` tokens at runtime via computed-style probe; fx overlays
-  (clear/lock/drop/level) live in `fx.ts`, disabled under reduced motion.
+  (clear/lock/drop/level + the "Stackle!" four-line burst) live in `fx.ts`,
+  disabled under reduced motion.
 - `src/input/` — keyboard (DAS 160 / ARR 40, self-implemented repeat) + touch
   gestures (drag/tap/flick) + on-screen button pad on coarse pointers
   (gestures stay available; pad always shown on touch).
@@ -74,5 +75,4 @@ Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
 
 ## Roadmap
 
-See CHANGELOG.md [Unreleased]: SFX, signature tetris-clear moment, daily seed
-mode.
+See CHANGELOG.md [Unreleased]: SFX, daily seed mode.
