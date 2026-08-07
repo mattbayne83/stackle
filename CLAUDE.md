@@ -17,8 +17,8 @@ is banned here.
 React 19 + TypeScript (strict — both app and functions) + Vite + Tailwind CSS 4
 (tokens in `src/index.css` @theme) + Zustand 5 (persist) + Vitest. Lint: oxlint.
 Leaderboard: Cloudflare Pages Function + KV (`STACKLE_KV`), contract pinned in
-`tasks/leaderboard-api.md`. **77 tests** (engine + validate + fridge merge +
-daily seed).
+`tasks/leaderboard-api.md`. **80 tests** (engine + validate + fridge merge +
+daily seed + settings).
 
 ## Architecture
 
@@ -38,9 +38,13 @@ daily seed).
   PlayScreen (loop host, pause, kind game-over; engine state in a ref, HUD
   numbers mirrored into React at low frequency). Game-over personal/family
   bests use the full fridge union (`fridgeEntries`), not local-only scores.
-- `src/store/` — Zustand persist: roster, settings (ghost/controls, per
-  player, edited from the pause overlay), local scores (`synced` flag per
-  record).
+- `src/store/` — Zustand persist: roster, settings (ghost/controls/sound,
+  per player, edited from the pause overlay; defaults spread under stored
+  entries so old records pick up new fields), local scores (`synced` flag
+  per record).
+- `src/audio/` — `SfxPlayer`: synthesized WebAudio kit (no asset files),
+  fed the engine event batch from PlayScreen's dispatch; lazy AudioContext
+  so it only starts after a user gesture. Muted by default.
 - `src/sync/` — leaderboard client: push-unsynced / fetch-remote (single-flight
   with 4s cooldown); `merge.ts` unions local + remote by id, folds cross-device
   players by case-insensitive name (`familyBest` / `personalBestEntry` for
@@ -70,8 +74,9 @@ daily seed).
 - Records for roster players deleted locally render as "Someone" and are not
   pushed (can't shape a SubmitRecord without a player).
 - Settings live in the pause overlay, not a screen: ghost toggle hidden on
-  Chill (always on there), pad toggle only on coarse pointers. `controls`
-  defaults to `'buttons'` — pad shown on touch unless turned off.
+  Chill (always on there), pad toggle only on coarse pointers, sound
+  always offered (muted default). `controls` defaults to `'buttons'` —
+  pad shown on touch unless turned off.
 - Empty fridge on a difficulty still celebrates the first score as family
   best (correct); false positives from other devices were the bug, not this.
 - "Today's stack" is session-only React state (reload resets to free play)
@@ -80,4 +85,5 @@ daily seed).
 
 ## Roadmap
 
-See CHANGELOG.md [Unreleased]: SFX.
+Backlog clear as of 2026-08-07 — CHANGELOG.md [Unreleased] lists what
+shipped (settings UI, the Stackle moment, daily seed, SFX).

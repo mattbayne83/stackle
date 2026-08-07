@@ -17,6 +17,7 @@ import { FxState } from '../render/fx'
 import { startLoop } from '../render/loop'
 import { launchConfetti } from '../render/confetti'
 import { Toggle } from '../components/Toggle'
+import { SfxPlayer } from '../audio/sfx'
 import { attachKeyboard } from '../input/keyboard'
 import { attachTouch } from '../input/touch'
 import { TouchButtons } from '../input/TouchButtons'
@@ -108,8 +109,10 @@ export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenPr
   const player = useRosterStore((s) => s.players.find((p) => p.id === playerId))
   const ghostSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).ghost)
   const padSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).controls)
+  const soundSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).sound)
   const setGhost = useSettingsStore((s) => s.setGhost)
   const setControls = useSettingsStore((s) => s.setControls)
+  const setSound = useSettingsStore((s) => s.setSound)
 
   const [hud, setHud] = useState<Hud>(INITIAL_HUD)
   const [ended, setEnded] = useState<EndState | null>(null)
@@ -120,6 +123,8 @@ export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenPr
   const stateRef = useRef<GameState | null>(null)
   const dispatchRef = useRef<(action: GameAction) => void>(() => {})
   const ghostRef = useRef(true)
+  const sfxRef = useRef<SfxPlayer | null>(null)
+  if (!sfxRef.current) sfxRef.current = new SfxPlayer()
 
   // Touch devices get the button pad unless the player turns it off in the
   // pause overlay; gestures stay available either way.
@@ -130,6 +135,11 @@ export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenPr
     // Chill always gets the ghost; elsewhere it's the player's call.
     ghostRef.current = difficulty === 'chill' ? true : ghostSetting
   }, [difficulty, ghostSetting])
+
+  useEffect(() => {
+    sfxRef.current?.setEnabled(soundSetting)
+  }, [soundSetting])
+  useEffect(() => () => sfxRef.current?.destroy(), [])
 
   // The whole run lives in this effect: engine state stays in a ref (never
   // React state per-frame); only HUD-visible numbers mirror into React, and
@@ -204,6 +214,7 @@ export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenPr
       stateRef.current = next
       if (next.events.length > 0) {
         fx.onEvents(prev, next, performance.now())
+        sfxRef.current?.onEvents(next.events)
         for (const ev of next.events) {
           if (ev.type === 'gameOver') finish(next)
         }
@@ -396,24 +407,27 @@ export function PlayScreen({ playerId, difficulty, daily, onExit }: PlayScreenPr
               </div>
               {/* Per-player tweaks live here — no settings screen. Chill keeps
                   its ghost always on; the pad toggle only matters on touch. */}
-              {(difficulty !== 'chill' || coarse) && (
-                <div className="mt-4 grid justify-items-stretch gap-1">
-                  {difficulty !== 'chill' && (
-                    <Toggle
-                      label="Ghost piece"
-                      checked={ghostSetting}
-                      onChange={(on) => setGhost(playerId, on)}
-                    />
-                  )}
-                  {coarse && (
-                    <Toggle
-                      label="Button pad"
-                      checked={padSetting === 'buttons'}
-                      onChange={(on) => setControls(playerId, on ? 'buttons' : 'gestures')}
-                    />
-                  )}
-                </div>
-              )}
+              <div className="mt-4 grid justify-items-stretch gap-1">
+                {difficulty !== 'chill' && (
+                  <Toggle
+                    label="Ghost piece"
+                    checked={ghostSetting}
+                    onChange={(on) => setGhost(playerId, on)}
+                  />
+                )}
+                {coarse && (
+                  <Toggle
+                    label="Button pad"
+                    checked={padSetting === 'buttons'}
+                    onChange={(on) => setControls(playerId, on ? 'buttons' : 'gestures')}
+                  />
+                )}
+                <Toggle
+                  label="Sound"
+                  checked={soundSetting}
+                  onChange={(on) => setSound(playerId, on)}
+                />
+              </div>
             </div>
           </div>
         )}

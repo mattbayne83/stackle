@@ -29,10 +29,10 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 - Today's stack: a home-screen toggle that seeds every run from the local
   calendar day, so the whole family wrestles the same piece sequence —
   "One more go" replays the same deal; scores post to the normal fridge
-
-### Planned
-
-- Sound effects (tasteful, optional, muted by default consideration)
+- Sound: a tiny synthesized WebAudio kit (no asset files) — soft lock
+  thock, weightier hard-drop thud, pentatonic pops per cleared line, an
+  ascending arpeggio for the Stackle, gentle level-up and game-over notes.
+  Muted by default; per-player Sound switch joins the pause overlay
 
 ## [1.0.0] — 2026-08-06
 
