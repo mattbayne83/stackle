@@ -15,6 +15,7 @@ import { BoardRenderer } from '../render/renderer'
 import { FxState } from '../render/fx'
 import { startLoop } from '../render/loop'
 import { launchConfetti } from '../render/confetti'
+import { Toggle } from '../components/Toggle'
 import { attachKeyboard } from '../input/keyboard'
 import { attachTouch } from '../input/touch'
 import { TouchButtons } from '../input/TouchButtons'
@@ -103,6 +104,9 @@ function Tray({
 export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
   const player = useRosterStore((s) => s.players.find((p) => p.id === playerId))
   const ghostSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).ghost)
+  const padSetting = useSettingsStore((s) => settingsFor(s.byPlayer, playerId).controls)
+  const setGhost = useSettingsStore((s) => s.setGhost)
+  const setControls = useSettingsStore((s) => s.setControls)
 
   const [hud, setHud] = useState<Hud>(INITIAL_HUD)
   const [ended, setEnded] = useState<EndState | null>(null)
@@ -114,10 +118,10 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
   const dispatchRef = useRef<(action: GameAction) => void>(() => {})
   const ghostRef = useRef(true)
 
-  // Touch devices always get the button pad; gestures stay available too.
-  // (settingsStore.controls has no UI writer yet — was an unreachable default.)
+  // Touch devices get the button pad unless the player turns it off in the
+  // pause overlay; gestures stay available either way.
   const coarse = useMemo(() => window.matchMedia('(pointer: coarse)').matches, [])
-  const showButtons = coarse
+  const showButtons = coarse && padSetting === 'buttons'
 
   useEffect(() => {
     // Chill always gets the ghost; elsewhere it's the player's call.
@@ -378,6 +382,26 @@ export function PlayScreen({ playerId, difficulty, onExit }: PlayScreenProps) {
                   Back home
                 </button>
               </div>
+              {/* Per-player tweaks live here — no settings screen. Chill keeps
+                  its ghost always on; the pad toggle only matters on touch. */}
+              {(difficulty !== 'chill' || coarse) && (
+                <div className="mt-4 grid justify-items-stretch gap-1">
+                  {difficulty !== 'chill' && (
+                    <Toggle
+                      label="Ghost piece"
+                      checked={ghostSetting}
+                      onChange={(on) => setGhost(playerId, on)}
+                    />
+                  )}
+                  {coarse && (
+                    <Toggle
+                      label="Button pad"
+                      checked={padSetting === 'buttons'}
+                      onChange={(on) => setControls(playerId, on ? 'buttons' : 'gestures')}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

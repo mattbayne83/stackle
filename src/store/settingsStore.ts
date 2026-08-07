@@ -2,7 +2,8 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { ControlPreference, PlayerSettings } from '../types'
 
-const DEFAULT_SETTINGS: PlayerSettings = { ghost: true, controls: 'gestures' }
+/** Pad defaults to shown on touch devices; gestures always stay available. */
+const DEFAULT_SETTINGS: PlayerSettings = { ghost: true, controls: 'buttons' }
 
 interface SettingsState {
   byPlayer: Record<string, PlayerSettings>

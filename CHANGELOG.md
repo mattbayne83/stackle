@@ -20,13 +20,15 @@ All notable changes to Stackle. Format follows [Keep a Changelog](https://keepac
 
 - Fridge merge unit tests (`src/sync/merge.test.ts`) covering name-fold,
   id dedupe, and family/personal best helpers
+- Per-player settings in the pause overlay: ghost piece toggle (Chill keeps
+  its ghost always on) and a button pad toggle on touch devices — no
+  settings screen, just two toy switches where they're needed
 
 ### Planned
 
 - Sound effects (tasteful, optional, muted by default consideration)
 - Signature four-line-clear moment (currently reuses the standard clear animation scaled up)
 - Daily seed mode — same piece sequence for the whole family each day
-- Settings UI for ghost piece / hide button pad (store already supports it)
 
 ## [1.0.0] — 2026-08-06
 
